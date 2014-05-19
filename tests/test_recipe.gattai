@@ -1,0 +1,28 @@
+{
+    "settings" : {
+        "virtualenv": "./",
+        "uses_setuptools": "TRUE",
+        "include_dirs": ["./include"],
+        "lib_dirs": ["./lib"],
+        "darwin" : {
+            "archs": ["i386"],
+            "min-version": "10.6",
+            "env_vars": {
+                "CC": "gcc-4.0",
+                "CXX": "g++-4.0"
+            }
+        }
+    },
+    "packages" : [
+        {
+            "name": "py_gd",
+            "version": "0.1.1",
+            "source_dir": "py_gd-master",
+            "source": "https://github.com/NOAA-ORR-ERD/py_gd/archive/master.zip",
+            "build_type": "python",
+            "env_vars": {
+                "DUMMY": "%(HOMEDIR)s/env/netcdf"
+            }
+        }
+    ]
+}

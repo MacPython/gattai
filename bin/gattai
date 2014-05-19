@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2012, Kevin Ollivier
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met: 
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer. 
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution. 
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies, 
+# either expressed or implied, of the Gattai Project.
+
+import optparse
+import os
+import sys
+import types
+import logging
+
+this_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.join(this_dir, '..', 'src')
+if os.path.exists(src_dir):
+    sys.path.append(src_dir)
+
+import gattai
+
+parser = optparse.OptionParser(usage="usage: %prog [options] <gattai_script> [build | clean]", version="%prog " + gattai.__version__)
+
+options = {
+    "list-targets"  : (False, "Returns a comma-separated list of all targets in the specified gattai script."),
+    "targets"       : ("all", "Comma separated list of dependencies to build. Default is to build all dependencies."),
+}
+
+keys = options.keys()
+keys.sort()
+for opt in keys:
+    default = options[opt][0]
+    action = "store"
+    if type(default) == types.BooleanType:
+        action = "store_true"
+    opt_name = opt.replace("-", "_")
+    if len(options[opt]) > 2:
+        # Even with the callback action we still have to workaround optparse's
+        # checking for presense of a value or not. Check for a '=' and set
+        # type accordingly.
+        vtype = None
+        for a in sys.argv:
+            if a.startswith('--'+opt+'='):
+                vtype = 'string'
+                break
+        parser.add_option("--" + opt, action='callback', type=vtype,
+                          default=default, dest=opt_name, help=options[opt][1],
+                          callback=options[opt][2], nargs=1)
+    else:
+        parser.add_option("--" + opt, default=default, action=action, 
+                          dest=opt_name, help=options[opt][1])
+        
+options, arguments = parser.parse_args()
+
+if len(arguments) == 0:
+    logging.error("Must supply a build recipe in JSON format.\n"
+                  " -h or --help for more help.")
+    sys.exit(1)
+
+recipe = gattai.GattaiRecipe(arguments[0])
+
+if options.list_targets is True:
+    print recipe.list_targets()
+else:
+    recipe.build_deps(options.targets.split(","), arguments)
