@@ -631,6 +631,15 @@ class Dependency(object):
             configure_args = ['--prefix="%s"' % install_dir]
             configure_args.extend(self.get_prop('configure_args', default=[]))
             
+            # Extra flags to be placed on CFLAGS and CXXFLAGS to be passed
+            # through configure.  There seems to be no other way to specify
+            # custom CFLAGS
+            if 'extra_cflags' in self.props:
+                extra_cflags.extend(self.props['extra_cflags'])
+            
+            if 'extra_cflags' in self.platform_props:
+                extra_cflags.extend(self.platform_props['extra_cflags'])
+                    
             if sys.platform.startswith('darwin'):
                 archs = self.get_prop('archs', default=None)
                 if archs is not None:
